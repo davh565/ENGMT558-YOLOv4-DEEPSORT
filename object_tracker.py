@@ -117,7 +117,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
             tracked_bboxes.append(bbox.tolist() + [tracking_id, index]) # Structure data, that we could use it with our draw_bbox function
 
         # draw detection on frame
-        image = draw_bbox(original_frame, tracked_bboxes, CLASSES=CLASSES, tracking=True, rectangle_colors=rectangle_colors)
+        image = draw_bbox(original_frame, tracked_bboxes, CLASSES=CLASSES, tracking=True)
 
         t3 = time.time()
         times.append(t2-t1)
