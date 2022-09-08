@@ -22,7 +22,7 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
-video_path   = "./IMAGES/carpark2.mp4"
+video_path   = "./IMAGES/carpark1.mp4"
 crop_path = "./cropped_detections"
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = []):
     # Definition of the parameters
@@ -52,6 +52,9 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     NUM_CLASS = read_class_names(CLASSES)
     key_list = list(NUM_CLASS.keys()) 
     val_list = list(NUM_CLASS.values())
+    
+    mask = np.zeros((height,width),"uint8")
+    mask = cv2.rectangle(mask, (125, 345), (1550, 1080), 255, -1)
     while True:
         _, frame = vid.read()
 
@@ -60,8 +63,10 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
             original_frame = cv2.cvtColor(original_frame, cv2.COLOR_BGR2RGB)
         except:
             break
+        frame_masked = cv2.bitwise_and(original_frame, original_frame, mask=mask)
+        # cv2.imwrite("./mask.png", frame_masked)
         
-        image_data = image_preprocess(np.copy(original_frame), [input_size, input_size])
+        image_data = image_preprocess(np.copy(frame_masked), [input_size, input_size])
         #image_data = tf.expand_dims(image_data, 0)
         image_data = image_data[np.newaxis, ...].astype(np.float32)
 
