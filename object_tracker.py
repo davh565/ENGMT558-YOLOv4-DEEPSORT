@@ -46,7 +46,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(vid.get(cv2.CAP_PROP_FPS))
-    codec = cv2.VideoWriter_fourcc(*'XVID')
+    codec = cv2.VideoWriter_fourcc(*'MPV4')
     out = cv2.VideoWriter(output_path, codec, fps, (width, height)) # output_path must be .mp4
 
     NUM_CLASS = read_class_names(CLASSES)
@@ -117,7 +117,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
             tracked_bboxes.append(bbox.tolist() + [tracking_id, index]) # Structure data, that we could use it with our draw_bbox function
 
         # draw detection on frame
-        image = draw_bbox(original_frame, tracked_bboxes, CLASSES=CLASSES, tracking=True)
+        image = draw_bbox(original_frame, tracked_bboxes, CLASSES=CLASSES, tracking=True, rectangle_colors=rectangle_colors)
 
         t3 = time.time()
         times.append(t2-t1)
@@ -130,7 +130,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
         fps = 1000 / ms
         fps2 = 1000 / (sum(times_2)/len(times_2)*1000)
         
-        image = cv2.putText(image, "Time: {:.1f} FPS".format(fps), (0, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+        # image = cv2.putText(image, "Time: {:.1f} FPS".format(fps), (0, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
         # draw original yolo detection
         #image = draw_bbox(image, bboxes, CLASSES=CLASSES, show_label=False, rectangle_colors=rectangle_colors, tracking=True)
@@ -148,4 +148,4 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
 
 
 yolo = Load_Yolo_model()
-Object_tracking(yolo, video_path, "detection.avi", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.1, rectangle_colors=(255,0,0), Track_only = ["Car", "Truck", "Bus", "Van"])
+Object_tracking(yolo, video_path, "detection.mp4", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.1, rectangle_colors=(255,0,0), Track_only = ["Car", "Truck", "Bus", "Van"])
