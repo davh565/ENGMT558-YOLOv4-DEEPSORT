@@ -2,3 +2,4 @@
 *.avi
 *.pyc
 *.weights
+/cropped_detections/*

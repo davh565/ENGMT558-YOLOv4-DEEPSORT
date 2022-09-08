@@ -23,7 +23,7 @@ from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
 video_path   = "./IMAGES/carpark2.mp4"
-
+crop_path = "./cropped_detections"
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = []):
     # Definition of the parameters
     max_cosine_distance = 0.7
@@ -115,7 +115,21 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
             tracking_id = track.track_id # Get the ID for the particular track
             index = key_list[val_list.index(class_name)] # Get predicted object index by object name
             tracked_bboxes.append(bbox.tolist() + [tracking_id, index]) # Structure data, that we could use it with our draw_bbox function
+            ####################################################################
+            if track.confidence > track.best_confidence:
+                track.best_confidence = track.confidence
+                bbox_int = [int(x) for x in bbox]
+                bbox_int = [0 if x < 0 else x for x in bbox_int]
+                cropped_obj = frame[bbox_int[1]:bbox_int[3], bbox_int[0]:bbox_int[2]]
+                # cropped_obj = frame[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
+                # construct image name and join it to path for saving crop properly
+                obj_name = track.class_name + '_' + str(track.track_id) + '.png'
+                obj_path = os.path.join(crop_path, obj_name )
+                print([int(x) for x in bbox],track.best_confidence)
+                # save image
+                cv2.imwrite(obj_path, cropped_obj)
 
+            ####################################################################
         # draw detection on frame
         image = draw_bbox(original_frame, tracked_bboxes, CLASSES=CLASSES, tracking=True, rectangle_colors=rectangle_colors)
 

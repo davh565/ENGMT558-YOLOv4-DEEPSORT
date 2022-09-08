@@ -1,5 +1,10 @@
+
 # vim: expandtab:ts=4:sw=4
 from __future__ import absolute_import
+################################################################################
+# import cv2
+# import os
+################################################################################
 import numpy as np
 from . import kalman_filter
 from . import linear_assignment
@@ -133,7 +138,18 @@ class Tracker:
     def _initiate_track(self, detection):
         mean, covariance = self.kf.initiate(detection.to_xyah())
         class_name = detection.get_class()
+        lastConfidence = detection.confidence
         self.tracks.append(Track(
             mean, covariance, self._next_id, self.n_init, self.max_age,
-            detection.feature, class_name))
+            detection.feature, class_name, lastConfidence))
+        ########################################################################
+        # print(detection.tlwh,detection.confidence)
+        # cropped_frame = frame[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
+        # # construct image name and join it to path for saving crop properly
+        # img_name = class_name + '_' + str(counts[class_name]) + '.png'
+        # img_path = os.path.join(path, img_name )
+        # # save image
+        # cv2.imwrite(img_path, cropped_img)
+
+        ########################################################################
         self._next_id += 1
