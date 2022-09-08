@@ -1,3 +1,4 @@
+*.mp4
+*.avi
 *.pyc
-model_data
-configs.py
+*.weights

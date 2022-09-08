@@ -22,7 +22,7 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
-video_path   = "./IMAGES/test.mp4"
+video_path   = "./IMAGES/carpark1.mp4"
 
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = []):
     # Definition of the parameters
@@ -148,4 +148,4 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
 
 
 yolo = Load_Yolo_model()
-Object_tracking(yolo, video_path, "detection.mp4", input_size=YOLO_INPUT_SIZE, show=True, iou_threshold=0.1, rectangle_colors=(255,0,0), Track_only = ["person"])
+Object_tracking(yolo, video_path, "detection.avi", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.1, rectangle_colors=(255,0,0), Track_only = ["Car", "Truck", "Bus", "Van"])
