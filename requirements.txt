@@ -4,7 +4,7 @@ wget>=3.2
 seaborn>=0.10.0
 tensorflow
 opencv-python==4.4.0.46
-tqdm==4.43.0
+tqdm>=4.43.0
 pandas
 awscli
 urllib3
