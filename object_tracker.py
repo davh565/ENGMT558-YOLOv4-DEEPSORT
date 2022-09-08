@@ -22,7 +22,7 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
-video_path   = "./IMAGES/carpark1.mp4"
+video_path   = "./IMAGES/carpark2.mp4"
 
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = []):
     # Definition of the parameters
@@ -117,7 +117,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
             tracked_bboxes.append(bbox.tolist() + [tracking_id, index]) # Structure data, that we could use it with our draw_bbox function
 
         # draw detection on frame
-        image = draw_bbox(original_frame, tracked_bboxes, CLASSES=CLASSES, tracking=True)
+        image = draw_bbox(original_frame, tracked_bboxes, CLASSES=CLASSES, tracking=True, rectangle_colors=rectangle_colors)
 
         t3 = time.time()
         times.append(t2-t1)
