@@ -34,7 +34,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     model_filename = 'model_data/mars-small128.pb'
     encoder = gdet.create_box_encoder(model_filename, batch_size=1)
     metric = nn_matching.NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
-    tracker = Tracker(metric, max_iou_distance=0.6, max_age=100, n_init=6)
+    tracker = Tracker(metric, max_iou_distance=0.6, max_age=100, n_init=10)
 
     times, times_2 = [], []
 
@@ -56,8 +56,10 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     
     mask = np.zeros((height,width),"uint8")
     mask = cv2.rectangle(mask, (125, 345), (1750, 1080), 255, -1)
+    frame_no = 0
     while True:
         _, frame = vid.read()
+        frame_no = frame_no + 1
 
         try:
             original_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -130,11 +132,11 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     cropped_obj = frame[bbox_int[1]:bbox_int[3], bbox_int[0]:bbox_int[2]]
                     # cropped_obj = frame[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
                     # construct image name and join it to path for saving crop properly
-                    obj_name = track.class_name + '_' + str(track.track_id) + '.png'
+                    obj_name = 'vehicle_' + str(track.track_id) + '.png'
                     obj_path = os.path.join(crop_path, obj_name )
                     # save image
                     cv2.imwrite(obj_path, cropped_obj)
-                print([int(x) for x in bbox],track.best_confidence)
+                print(frame_no/18.0, [int(x) for x in bbox],track.best_confidence)
 
             ####################################################################
         # draw detection on frame
