@@ -58,6 +58,12 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     mask = np.zeros((height,width),"uint8")
     mask = cv2.rectangle(mask, (125, 345), (1750, 1080), 255, -1)
     frame_no = 0
+    # Obtain info from the tracks
+    tracked_bboxes = []
+    paths = []
+    best_confidences = []
+    seconds = []
+    ids = []
     while True:
         _, frame = vid.read()
         frame_no = frame_no + 1
@@ -114,12 +120,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
         tracker.predict()
         tracker.update(detections)
 
-        # Obtain info from the tracks
-        tracked_bboxes = []
-        paths = []
-        best_confidences = []
-        seconds = []
-        ids = []
+        
         
         for track in tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 5:
