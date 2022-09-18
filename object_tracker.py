@@ -185,7 +185,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                         'path': paths,
                         'confidence': best_confidences})
     print(df)
-    df = df.drop_duplicates('id' , keep='last').sort_values(0 , ascending=False).reset_index(drop=True)
+    df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=False).reset_index(drop=True)
     df.to_csv("./detections.csv", index=False)
 
 yolo = Load_Yolo_model()
