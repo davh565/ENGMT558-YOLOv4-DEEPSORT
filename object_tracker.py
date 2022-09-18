@@ -25,7 +25,7 @@ from deep_sort import generate_detections as gdet
 video_path   = "./IMAGES/carpark3.mp4"
 crop_path = "./cropped_detections"
 crop_threshold = 0.0 #min confidence required to crop detection
-def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [], n_init = 6):
+def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3):
     # Definition of the parameters
     max_cosine_distance = 0.7
     nn_budget = None
@@ -34,7 +34,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     model_filename = 'model_data/mars-small128.pb'
     encoder = gdet.create_box_encoder(model_filename, batch_size=1)
     metric = nn_matching.NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
-    tracker = Tracker(metric, max_iou_distance=0.6, max_age=100, n_init=10)
+    tracker = Tracker(metric, max_iou_distance=0.6, max_age=max_age, n_init=n_init)
 
     times, times_2 = [], []
 
@@ -136,7 +136,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     obj_path = os.path.join(crop_path, obj_name )
                     # save image
                     cv2.imwrite(obj_path, cropped_obj)
-                print(frame_no/18.0, [int(x) for x in bbox],track.best_confidence)
+                print(frame_no/18, [int(x) for x in bbox],track.best_confidence, obj_name)
 
             ####################################################################
         # draw detection on frame
@@ -171,4 +171,4 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
 
 
 yolo = Load_Yolo_model()
-Object_tracking(yolo, video_path, "detection.mp4", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.1, rectangle_colors=(0,0,255), Track_only = ["Car", "Truck", "Bus", "Van"])
+Object_tracking(yolo, video_path, "detection.mp4", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.2, rectangle_colors=(0,0,255), Track_only = ["Car", "Truck", "Bus", "Van"], n_init = 12)

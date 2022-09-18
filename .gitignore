@@ -3,3 +3,4 @@
 *.pyc
 *.weights
 /cropped_detections/*
+/n_init10
