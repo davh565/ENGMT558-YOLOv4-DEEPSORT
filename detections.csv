@@ -1,0 +1,4 @@
+id,seconds,path,confidence
+25,33.88254324197769,./cropped_detections/vehicle_25.png,0.6493027210235596
+10,13.888158273696899,./cropped_detections/vehicle_10.png,0.9864069819450378
+2,6.784163308143616,./cropped_detections/vehicle_2.png,0.8897683024406433

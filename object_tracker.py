@@ -23,7 +23,7 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
-video_path   = "./IMAGES/carpark2.mp4"
+video_path   = "./IMAGES/carpark3.mp4"
 crop_path = "./cropped_detections"
 crop_threshold = 0.0 #min confidence required to crop detection
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3):
