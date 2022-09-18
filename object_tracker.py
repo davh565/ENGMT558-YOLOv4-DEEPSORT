@@ -16,13 +16,14 @@ import tensorflow as tf
 from yolov3.utils import Load_Yolo_model, image_preprocess, postprocess_boxes, nms, draw_bbox, read_class_names
 from yolov3.configs import *
 import time
+import pandas as pd
 
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
-video_path   = "./IMAGES/carpark3.mp4"
+video_path   = "./IMAGES/carpark2.mp4"
 crop_path = "./cropped_detections"
 crop_threshold = 0.0 #min confidence required to crop detection
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3):
@@ -115,6 +116,11 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
 
         # Obtain info from the tracks
         tracked_bboxes = []
+        paths = []
+        best_confidences = []
+        seconds = []
+        ids = []
+        
         for track in tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 5:
                 continue 
@@ -135,8 +141,14 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     obj_name = 'vehicle_' + str(track.track_id) + '.png'
                     obj_path = os.path.join(crop_path, obj_name )
                     # save image
+                    paths.append(obj_path)
+                    best_confidences.append(track.best_confidence)
+                    seconds.append(frame_no/fps)
+                    ids.append(track.track_id)
                     cv2.imwrite(obj_path, cropped_obj)
-                print("{:.2f}".format(frame_no/18), [int(x) for x in bbox],track.best_confidence, obj_name)
+                    
+                print("{:.2f}".format(frame_no/18), [int(x) for x in bbox],"{:.2f}".format(track.best_confidence), obj_name)
+                
 
             ####################################################################
         # draw detection on frame
@@ -168,7 +180,12 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
         #         break
             
     # cv2.destroyAllWindows()
-
+    df = pd.DataFrame({ 'id': ids,
+                        'seconds': seconds,
+                        'path': paths,
+                        'confidence': best_confidences})
+    df = df.drop_duplicates([0] , keep='last').sort_values(0 , ascending=False).reset_index(drop=True)
+    df.to_csv("./detections.csv", index=False)
 
 yolo = Load_Yolo_model()
 Object_tracking(yolo,
@@ -181,3 +198,5 @@ Object_tracking(yolo,
                 Track_only = ["Car", "Truck", "Bus", "Van"],
                 n_init = 12,
                 max_age=15)
+
+
