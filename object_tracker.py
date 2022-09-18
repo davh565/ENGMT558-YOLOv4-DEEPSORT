@@ -22,8 +22,9 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
-video_path   = "./IMAGES/carpark1.mp4"
+video_path   = "./IMAGES/carpark3.mp4"
 crop_path = "./cropped_detections"
+crop_threshold = 0.0 #min confidence required to crop detection
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = []):
     # Definition of the parameters
     max_cosine_distance = 0.7
@@ -33,7 +34,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     model_filename = 'model_data/mars-small128.pb'
     encoder = gdet.create_box_encoder(model_filename, batch_size=1)
     metric = nn_matching.NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
-    tracker = Tracker(metric)
+    tracker = Tracker(metric, max_iou_distance=0.6, max_age=100, n_init=6)
 
     times, times_2 = [], []
 
@@ -54,7 +55,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     val_list = list(NUM_CLASS.values())
     
     mask = np.zeros((height,width),"uint8")
-    mask = cv2.rectangle(mask, (125, 345), (1550, 1080), 255, -1)
+    mask = cv2.rectangle(mask, (125, 345), (1750, 1080), 255, -1)
     while True:
         _, frame = vid.read()
 
@@ -123,16 +124,17 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
             ####################################################################
             if track.confidence > track.best_confidence:
                 track.best_confidence = track.confidence
-                bbox_int = [int(x) for x in bbox]
-                bbox_int = [0 if x < 0 else x for x in bbox_int]
-                cropped_obj = frame[bbox_int[1]:bbox_int[3], bbox_int[0]:bbox_int[2]]
-                # cropped_obj = frame[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
-                # construct image name and join it to path for saving crop properly
-                obj_name = track.class_name + '_' + str(track.track_id) + '.png'
-                obj_path = os.path.join(crop_path, obj_name )
+                if track.best_confidence >= crop_threshold:
+                    bbox_int = [int(x) for x in bbox]
+                    bbox_int = [0 if x < 0 else x for x in bbox_int]
+                    cropped_obj = frame[bbox_int[1]:bbox_int[3], bbox_int[0]:bbox_int[2]]
+                    # cropped_obj = frame[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
+                    # construct image name and join it to path for saving crop properly
+                    obj_name = track.class_name + '_' + str(track.track_id) + '.png'
+                    obj_path = os.path.join(crop_path, obj_name )
+                    # save image
+                    cv2.imwrite(obj_path, cropped_obj)
                 print([int(x) for x in bbox],track.best_confidence)
-                # save image
-                cv2.imwrite(obj_path, cropped_obj)
 
             ####################################################################
         # draw detection on frame
@@ -154,16 +156,16 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
         # draw original yolo detection
         #image = draw_bbox(image, bboxes, CLASSES=CLASSES, show_label=False, rectangle_colors=rectangle_colors, tracking=True)
 
-        print("Time: {:.2f}ms, Detection FPS: {:.1f}, total FPS: {:.1f}".format(ms, fps, fps2))
+        # print("Time: {:.2f}ms, Detection FPS: {:.1f}, total FPS: {:.1f}".format(ms, fps, fps2))
         if output_path != '': out.write(image)
-        if show:
-            cv2.imshow('output', image)
+        # if show:
+        #     cv2.imshow('output', image)
             
-            if cv2.waitKey(25) & 0xFF == ord("q"):
-                cv2.destroyAllWindows()
-                break
+        #     if cv2.waitKey(25) & 0xFF == ord("q"):
+        #         cv2.destroyAllWindows()
+        #         break
             
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
 
 
 yolo = Load_Yolo_model()
