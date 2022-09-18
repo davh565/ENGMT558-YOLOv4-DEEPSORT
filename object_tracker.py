@@ -136,7 +136,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     obj_path = os.path.join(crop_path, obj_name )
                     # save image
                     cv2.imwrite(obj_path, cropped_obj)
-                print(frame_no/18, [int(x) for x in bbox],track.best_confidence, obj_name)
+                print("{:.2f}".format(frame_no/18), [int(x) for x in bbox],track.best_confidence, obj_name)
 
             ####################################################################
         # draw detection on frame
@@ -171,4 +171,4 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
 
 
 yolo = Load_Yolo_model()
-Object_tracking(yolo, video_path, "detection.mp4", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.2, rectangle_colors=(0,0,255), Track_only = ["Car", "Truck", "Bus", "Van"], n_init = 12)
+Object_tracking(yolo, video_path, "detection.mp4", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.2, rectangle_colors=(0,0,255), Track_only = ["Car", "Truck", "Bus", "Van"], n_init = 12,max_age=15)
