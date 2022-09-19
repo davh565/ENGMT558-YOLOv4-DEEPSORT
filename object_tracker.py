@@ -148,7 +148,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     ids.append(track.track_id)
                     cv2.imwrite(obj_path, cropped_obj)
                     
-                print("{:.2f}".format(frame_no/18), [int(x) for x in bbox],"{:.2f}".format(track.best_confidence), obj_name)
+                    print("{:.2f}".format(frame_no/18), [int(x) for x in bbox],"{:.2f}".format(track.best_confidence), obj_name)
                 
 
             ####################################################################
