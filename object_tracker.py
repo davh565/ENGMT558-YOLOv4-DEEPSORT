@@ -25,7 +25,7 @@ from deep_sort import generate_detections as gdet
 
 video_path   = "./IMAGES/carpark3.mp4"
 crop_path = "./cropped_detections"
-crop_threshold = 0.0 #min confidence required to crop detection
+crop_threshold = 0.6 #min confidence required to crop detection
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3):
     # Definition of the parameters
     max_cosine_distance = 0.7
@@ -186,7 +186,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                         'path': paths,
                         'confidence': best_confidences})
     print(df)
-    df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=False).reset_index(drop=True)
+    df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=True).reset_index(drop=True)
     df.to_csv("./detections.csv", index=False)
 
 yolo = Load_Yolo_model()
@@ -195,7 +195,7 @@ Object_tracking(yolo,
                 "detection.mp4",
                 input_size=YOLO_INPUT_SIZE,
                 show=False, 
-                iou_threshold=0.05,
+                iou_threshold=0.1,
                 rectangle_colors=(0,0,255),
                 Track_only = ["Car", "Truck", "Bus", "Van"],
                 n_init = 12,
