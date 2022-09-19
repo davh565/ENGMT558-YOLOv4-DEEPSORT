@@ -189,9 +189,10 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     print(df)
     df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=True).reset_index(drop=True)
     df.to_csv("./detections.csv", index=False)
+    return df
 
 
-def detect_plate(Yolo, image_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
+def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
     original_image      = cv2.imread(image_path)
     original_image      = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     original_image      = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
@@ -220,8 +221,7 @@ def detect_plate(Yolo, image_path, output_path, input_size=416, show=False, CLAS
     # construct image name and join it to path for saving crop properly
 
     # save image
-    df = pd.read_csv("./detections.csv")
-    df['plate'] = ""
+    # df = pd.read_csv("./detections.csv")
     # df.set_index("path", inplace=True)
     for bbox in bboxes:
         if bbox[5] == 0:
@@ -234,11 +234,12 @@ def detect_plate(Yolo, image_path, output_path, input_size=416, show=False, CLAS
             cropped_obj = cv2.medianBlur(cropped_obj, 3)
             # perform otsu thresh (using binary inverse since opencv contours work better with white text)
             ret, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY)
-            print(pytesseract.image_to_string(thresh))
-            plate_str = pytesseract.image_to_string(thresh)
+            plate_str = pytesseract.image_to_string(thresh).strip()
+            print(plate_str)
             df.loc[df['path'] == image_path.rsplit('/', 1)[1],["plate"]] = plate_str
             cv2.imwrite(output_path, thresh)
-    print(df)
+    return df
+    # print(df)
     # # CreateXMLfile("XML_Detections", str(int(time.time())), original_image, bboxes, read_class_names(CLASSES))
 
     # if output_path != '': cv2.imwrite(output_path, image)
@@ -253,7 +254,7 @@ def detect_plate(Yolo, image_path, output_path, input_size=416, show=False, CLAS
     # return image
 
 yolo = Load_Yolo_model()
-# Object_tracking(yolo,
+# df = Object_tracking(yolo,
 #                 video_path,
 #                 "detection.mp4",
 #                 input_size=YOLO_INPUT_SIZE,
@@ -264,5 +265,10 @@ yolo = Load_Yolo_model()
 #                 n_init = 12,
 #                 max_age=15)
 
+df = pd.read_csv("./detections.csv")
+df['plate'] = "<no plate>"
 
-detect_plate(yolo, "cropped_detections/vehicle_6.png", "plates/vehicle_6.png", input_size=YOLO_INPUT_SIZE, show=True, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0))
+for path in df.path.iteritems():
+    df = detect_plate(yolo,df, "cropped_detections/"+path[1], "plates/"+path[1], input_size=YOLO_INPUT_SIZE, show=True, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0))
+df.plate = df.plate.replace("","<not readable>")
+print(df)
