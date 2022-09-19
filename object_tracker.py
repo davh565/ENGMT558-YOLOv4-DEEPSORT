@@ -17,6 +17,7 @@ from yolov3.utils import Load_Yolo_model, image_preprocess, postprocess_boxes, n
 from yolov3.configs import *
 import time
 import pandas as pd
+import pytesseract
 
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
@@ -189,16 +190,79 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=True).reset_index(drop=True)
     df.to_csv("./detections.csv", index=False)
 
+
+def detect_plate(Yolo, image_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors=''):
+    original_image      = cv2.imread(image_path)
+    original_image      = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    original_image      = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+
+    image_data = image_preprocess(np.copy(original_image), [input_size, input_size])
+    image_data = image_data[np.newaxis, ...].astype(np.float32)
+
+    if YOLO_FRAMEWORK == "tf":
+        pred_bbox = Yolo.predict(image_data)
+    elif YOLO_FRAMEWORK == "trt":
+        batched_input = tf.constant(image_data)
+        result = Yolo(batched_input)
+        pred_bbox = []
+        for key, value in result.items():
+            value = value.numpy()
+            pred_bbox.append(value)
+        
+    pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
+    pred_bbox = tf.concat(pred_bbox, axis=0)
+    
+    bboxes = postprocess_boxes(pred_bbox, original_image, input_size, score_threshold)
+    bboxes = nms(bboxes, iou_threshold, method='nms')
+
+    # image = draw_bbox(original_image, bboxes, CLASSES=CLASSES, rectangle_colors=rectangle_colors)
+    # cropped_obj = frame[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
+    # construct image name and join it to path for saving crop properly
+
+    # save image
+    df = pd.read_csv("./detections.csv")
+    df['plate'] = ""
+    # df.set_index("path", inplace=True)
+    for bbox in bboxes:
+        if bbox[5] == 0:
+            bbox_int = [int(x) for x in bbox]
+            bbox_int = [0 if x < 0 else x for x in bbox_int]
+            cropped_obj = original_image[bbox_int[1]:bbox_int[3], bbox_int[0]:bbox_int[2]]
+            cropped_obj = cv2.cvtColor(cropped_obj, cv2.COLOR_BGR2GRAY)
+            cropped_obj = cv2.resize( cropped_obj, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
+            blur = cv2.GaussianBlur(cropped_obj, (5,5), 0)
+            cropped_obj = cv2.medianBlur(cropped_obj, 3)
+            # perform otsu thresh (using binary inverse since opencv contours work better with white text)
+            ret, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY)
+            print(pytesseract.image_to_string(thresh))
+            plate_str = pytesseract.image_to_string(thresh)
+            df.loc[df['path'] == image_path.rsplit('/', 1)[1],["plate"]] = plate_str
+            cv2.imwrite(output_path, thresh)
+    print(df)
+    # # CreateXMLfile("XML_Detections", str(int(time.time())), original_image, bboxes, read_class_names(CLASSES))
+
+    # if output_path != '': cv2.imwrite(output_path, image)
+    # if show:
+    #     # Show the image
+    #     # cv2.imshow("predicted image", image)
+    #     # Load and hold the image
+    #     cv2.waitKey(0)
+    #     # To close the window after the required kill value was provided
+    #     cv2.destroyAllWindows()
+        
+    # return image
+
 yolo = Load_Yolo_model()
-Object_tracking(yolo,
-                video_path,
-                "detection.mp4",
-                input_size=YOLO_INPUT_SIZE,
-                show=False, 
-                iou_threshold=0.1,
-                rectangle_colors=(0,0,255),
-                Track_only = ["Car", "Truck", "Bus", "Van"],
-                n_init = 12,
-                max_age=15)
+# Object_tracking(yolo,
+#                 video_path,
+#                 "detection.mp4",
+#                 input_size=YOLO_INPUT_SIZE,
+#                 show=False, 
+#                 iou_threshold=0.1,
+#                 rectangle_colors=(0,0,255),
+#                 Track_only = ["Car", "Truck", "Bus", "Van"],
+#                 n_init = 12,
+#                 max_age=15)
 
 
+detect_plate(yolo, "cropped_detections/vehicle_6.png", "plates/vehicle_6.png", input_size=YOLO_INPUT_SIZE, show=True, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0))
