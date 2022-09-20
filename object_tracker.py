@@ -254,6 +254,7 @@ def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, C
             thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, rect_kern)
             thresh = cv2.GaussianBlur(thresh, (5,5), 0)
             thresh = cv2.medianBlur(thresh, 3)
+            thresh = cv2.bitwise_not(thresh)
             # area = cv2.contourArea(contours[0])
             # print(area)
             # contours = np.array(contours).reshape((-1,1,2)).astype(np.int32)
