@@ -295,7 +295,8 @@ def get_timestamp(filename, fps, frame_num):
     init_datetime = datetime(init_year, init_month, init_day, init_hour, init_min, init_sec)
     seconds = frame_num/fps
     elapsed_time = timedelta(seconds=seconds)
-    return  str(init_datetime + elapsed_time)
+    final_datetime = init_datetime + elapsed_time
+    return  str(final_datetime.time())+"-"+str(final_datetime.date())
     
 yolo = Load_Yolo_model()
 df = Object_tracking(yolo,
