@@ -73,7 +73,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     frames = []
     timestamps = []
     while True:
-        while frame_no %(skip_frames+1) == 0:
+        while frame_no %(skip_frames+1) != 0:
             _, frame = vid.read()
             frame_no = frame_no + 1
 
