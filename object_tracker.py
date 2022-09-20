@@ -309,7 +309,7 @@ df = Object_tracking(yolo,
                 iou_threshold=0.1,
                 rectangle_colors=(0,0,255),
                 Track_only = ["Car", "Truck", "Bus", "Van"],
-                n_init = 12,
+                n_init = 3,
                 max_age=15,
                 skip_frames=3)
 
