@@ -19,11 +19,14 @@ import time
 import pandas as pd
 import pytesseract
 import imutils
+import math as m
 
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
+
+file_str = "Administrator_IPCamera 08_20220617102156_20220617114348 2"
 
 video_path   = "./IMAGES/carpark3.mp4"
 crop_path = "./cropped_detections"
@@ -66,6 +69,8 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     best_confidences = []
     seconds = []
     ids = []
+    frames = []
+    timestamps = []
     while True:
         _, frame = vid.read()
         frame_no = frame_no + 1
@@ -145,9 +150,12 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     obj_path = os.path.join(crop_path, obj_name )
                     # save image
                     paths.append(obj_path)
+                    frames.append(frame_no)
                     best_confidences.append(track.best_confidence)
                     seconds.append(frame_no/fps)
                     ids.append(track.track_id)
+                    timestamps.append(get_timestamp(file_str, fps, frame_no))
+                    print(timestamps[-1])
                     cv2.imwrite(obj_path, cropped_obj)
                     
                     print("{:.2f}".format(frame_no/18), [int(x) for x in bbox],"{:.2f}".format(track.best_confidence), obj_name)
@@ -184,10 +192,11 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
             
     # cv2.destroyAllWindows()
     df = pd.DataFrame({ 'id': ids,
-                        'seconds': seconds,
+                        'frame': frames,
+                        'timestamp': timestamps,
                         'path': paths,
                         'confidence': best_confidences})
-    # print(df)
+    print(df)
     df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=True).reset_index(drop=True)
     df.to_csv("./detections.csv", index=False)
     return df
@@ -279,17 +288,45 @@ def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, C
         
     # return image
 
+def get_timestamp(filename, fps, frame_num):
+    date_str = filename.split("_")[2]
+    init_year, init_month, init_day, init_hour, init_min, init_sec = date_str[0:4],date_str[4:6],date_str[6:8],date_str[8:10],date_str[10:12],date_str[12:14]
+    hours = (fps / frame_num)/3600
+    hours_int = m.trunc(hours)
+    hours_rem = hours - hours_int
+    minutes = hours_rem * 60
+    minutes_int = m.trunc(minutes)
+    minutes_rem = minutes - minutes_int
+    seconds = minutes_rem * 60
+    seconds_int = m.round(seconds)
+    SS = init_sec + seconds_int
+    MM = init_min + minutes_int
+    HH = init_hour + hours_int
+    dd = init_day
+    mm = init_month
+    yy = init_year
+    if SS > 60:
+        SS = SS - 60
+        MM = MM + 1
+    if MM > 60:
+        MM = MM - 60
+        HH = HH + 1
+    if HH > 24:
+        HH = HH - 24
+        dd = dd + 1
+    return  str(HH) + ":"+ str(MM) +":"+ str(SS)+"-"+str(yy) +"_"+ str(mm) +"_"+ str(dd)
+    
 yolo = Load_Yolo_model()
-# df = Object_tracking(yolo,
-#                 video_path,
-#                 "detection.mp4",
-#                 input_size=YOLO_INPUT_SIZE,
-#                 show=False, 
-#                 iou_threshold=0.1,
-#                 rectangle_colors=(0,0,255),
-#                 Track_only = ["Car", "Truck", "Bus", "Van"],
-#                 n_init = 12,
-#                 max_age=15)
+df = Object_tracking(yolo,
+                video_path,
+                "detection.mp4",
+                input_size=YOLO_INPUT_SIZE,
+                show=False, 
+                iou_threshold=0.1,
+                rectangle_colors=(0,0,255),
+                Track_only = ["Car", "Truck", "Bus", "Van"],
+                n_init = 12,
+                max_age=15)
 
 df = pd.read_csv("./detections.csv")
 df['plate'] = "<no plate>"
@@ -297,4 +334,5 @@ df['plate'] = "<no plate>"
 for path in df.path.iteritems():
     df = detect_plate(yolo,df, "cropped_detections/"+path[1], "plates/"+path[1], input_size=YOLO_INPUT_SIZE, show=False, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0),score_threshold=0.1, iou_threshold=0.2)
 df.plate = df.plate.replace("","<not readable>")
+df['colour'] = "<none>"
 print(df)
