@@ -62,7 +62,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     val_list = list(NUM_CLASS.values())
     
     mask = np.zeros((height,width),"uint8")
-    mask = cv2.rectangle(mask, (125, 345), (1750, 1080), 255, -1)
+    mask = cv2.rectangle(mask, (125, 300), (1750, 1080), 255, -1)
     frame_no = 0
     # Obtain info from the tracks
     tracked_bboxes = []
@@ -151,7 +151,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     obj_name = 'vehicle_' + str(track.track_id) + '.png'
                     obj_path = os.path.join(crop_path, obj_name )
                     # save image
-                    paths.append(obj_path)
+                    paths.append(obj_name)
                     frames.append(frame_no)
                     best_confidences.append(track.best_confidence)
                     seconds.append(frame_no/fps)
@@ -185,14 +185,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
 
         # print("Time: {:.2f}ms, Detection FPS: {:.1f}, total FPS: {:.1f}".format(ms, fps, fps2))
         if output_path != '': out.write(image)
-        # if show:
-        #     cv2.imshow('output', image)
-            
-        #     if cv2.waitKey(25) & 0xFF == ord("q"):
-        #         cv2.destroyAllWindows()
-        #         break
-            
-    # cv2.destroyAllWindows()
+
     df = pd.DataFrame({ 'id': ids,
                         'frame': frames,
                         'seconds': seconds,
@@ -311,7 +304,7 @@ df = Object_tracking(yolo,
                 Track_only = ["Car", "Truck", "Bus", "Van"],
                 n_init = 3,
                 max_age=15,
-                skip_frames=3)
+                skip_frames=18)
 
 df = pd.read_csv("./detections.csv")
 df['plate'] = "<no plate>"
