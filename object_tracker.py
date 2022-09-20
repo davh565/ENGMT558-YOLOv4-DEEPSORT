@@ -314,7 +314,7 @@ def get_timestamp(filename, fps, frame_num):
     if HH > 24:
         HH = HH - 24
         dd = dd + 1
-    return  str(HH) + ":"+ str(MM) +":"+ str(SS)+"-"+str(yy) +"_"+ str(mm) +"_"+ str(dd)
+    return  str(HH) + ":"+ str(MM) +":"+ str(SS)+"-"+str(yy) +"_"+ "{:02d}".format(str(mm)) +"_"+ "{:02d}".format(str(dd))
     
 yolo = Load_Yolo_model()
 df = Object_tracking(yolo,
