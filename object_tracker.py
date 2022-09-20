@@ -293,9 +293,9 @@ def get_colour(clusters, input_path,output_path):
     output.save(output_path)
     output = cv2.imread(output_path)
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
-    plt.figure()
-    plt.axis("off")
-    plt.imshow(output)
+    # plt.figure()
+    # plt.axis("off")
+    # plt.imshow(output)
     output_pixels = output.reshape((output.shape[0] * output.shape[1], 3))
     clt = KMeans(n_clusters=clusters)
     clt.fit(output_pixels)
@@ -336,8 +336,8 @@ for filename in filenames:
                     rectangle_colors=(0,0,255),
                     Track_only = ["Car", "Truck", "Bus", "Van"],
                     n_init = 3,
-                    max_age=15,
-                    skip_frames=50)
+                    max_age=5,
+                    skip_frames=9)
 
     # df = pd.read_csv("./detections.csv")
     df['plate'] = "$no_plate$"
@@ -345,9 +345,10 @@ for filename in filenames:
     print("Reading Plates and Colours in "+filename)
     for path in df.path.iteritems():
         df = detect_plate(yolo,df,crop_path+path[1] ,plate_path+path[1] , input_size=YOLO_INPUT_SIZE, show=False, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0),score_threshold=0.1, iou_threshold=0.2)
-        row = df.loc[df['path'] == path[1]]
         df.loc[df['path'] == path[1],["colour"]] = get_colour(3,crop_path+path[1],crop_path+path[1])
-        output_filename = (row.plate+"-"+row.colour+"-"+row.timestamp)[0]
+        row = df.loc[df['path'] == path[1]]
+        row = row.iloc[0]
+        output_filename = (row.plate+"-"+row.colour+"-"+row.timestamp)
         shutil.copyfile(crop_path+path[1], output_path+"/"+output_filename+".png")
     print(df)
 
