@@ -194,6 +194,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     # cv2.destroyAllWindows()
     df = pd.DataFrame({ 'id': ids,
                         'frame': frames,
+                        'seconds': seconds,
                         'timestamp': timestamps,
                         'path': paths,
                         'confidence': best_confidences})
