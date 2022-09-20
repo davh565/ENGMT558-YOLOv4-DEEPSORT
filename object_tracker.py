@@ -20,7 +20,7 @@ import pandas as pd
 import pytesseract
 import imutils
 import math as m
-from datetime import datetime, time 
+from datetime import datetime, timedelta 
 
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
