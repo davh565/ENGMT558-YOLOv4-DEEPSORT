@@ -32,7 +32,7 @@ file_str = "Administrator_IPCamera 08_20220617102156_20220617114348 2"
 video_path   = "./IMAGES/carpark3.mp4"
 crop_path = "./cropped_detections"
 crop_threshold = 0.6 #min confidence required to crop detection
-def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3):
+def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3, skip_frames=0):
     # Definition of the parameters
     max_cosine_distance = 0.7
     nn_budget = None
@@ -73,8 +73,9 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     frames = []
     timestamps = []
     while True:
-        _, frame = vid.read()
-        frame_no = frame_no + 1
+        while frame_no %(skip_frames+1) == 0:
+            _, frame = vid.read()
+            frame_no = frame_no + 1
 
         try:
             original_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -309,7 +310,8 @@ df = Object_tracking(yolo,
                 rectangle_colors=(0,0,255),
                 Track_only = ["Car", "Truck", "Bus", "Van"],
                 n_init = 12,
-                max_age=15)
+                max_age=15,
+                skip_frames=3)
 
 df = pd.read_csv("./detections.csv")
 df['plate'] = "<no plate>"
