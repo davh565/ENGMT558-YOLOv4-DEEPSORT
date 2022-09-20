@@ -292,9 +292,9 @@ def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, C
 def get_timestamp(filename, fps, frame_num):
     date_str = filename.split("_")[2]
     init_year, init_month, init_day, init_hour, init_min, init_sec = int(date_str[0:4]),int(date_str[4:6]),int(date_str[6:8]),int(date_str[8:10]),int(date_str[10:12]),int(date_str[12:14])
-    init_datetime = datetime.datetime(init_year, init_month, init_day, init_hour, init_min, init_sec)
+    init_datetime = datetime(init_year, init_month, init_day, init_hour, init_min, init_sec)
     seconds = frame_num/fps
-    elapsed_time = datetime.timedelta(seconds=seconds)
+    elapsed_time = timedelta(seconds=seconds)
     return  str(init_datetime + elapsed_time)
     
 yolo = Load_Yolo_model()
