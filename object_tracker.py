@@ -18,6 +18,7 @@ from yolov3.configs import *
 import time
 import pandas as pd
 import pytesseract
+import imutils
 
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
@@ -186,7 +187,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                         'seconds': seconds,
                         'path': paths,
                         'confidence': best_confidences})
-    print(df)
+    # print(df)
     df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=True).reset_index(drop=True)
     df.to_csv("./detections.csv", index=False)
     return df
@@ -230,12 +231,36 @@ def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, C
             cropped_obj = original_image[bbox_int[1]:bbox_int[3], bbox_int[0]:bbox_int[2]]
             cropped_obj = cv2.cvtColor(cropped_obj, cv2.COLOR_BGR2GRAY)
             cropped_obj = cv2.resize( cropped_obj, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
-            blur = cv2.GaussianBlur(cropped_obj, (5,5), 0)
-            cropped_obj = cv2.medianBlur(cropped_obj, 3)
             # perform otsu thresh (using binary inverse since opencv contours work better with white text)
-            ret, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY)
+            ret, thresh = cv2.threshold(cropped_obj, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
+            rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+            # close = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, rect_kern)
+            
+            thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, rect_kern)
+            thresh = cv2.morphologyEx(thresh, cv2.MORPH_ERODE, rect_kern)
+            contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            # contours = imutils.grab_contours(contours)
+            mask = np.ones(thresh.shape[:2], dtype="uint8") * 255
+            # loop over the contours
+            for c in contours:
+                x,y,w,h = cv2.boundingRect(c)
+                # if the contour is bad, draw it on the mask
+                if w >= 0.6*thresh.shape[1] or h >= thresh.shape[0] or cv2.contourArea(c) <= 0.01*thresh.shape[0]*thresh.shape[1]:
+                    cv2.drawContours(mask, [c], -1, 0, -1)
+            thresh = cv2.bitwise_and(thresh, thresh, mask=mask)
+            thresh = cv2.dilate(thresh, rect_kern, iterations = 1)
+            thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, rect_kern)
+            rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+            thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, rect_kern)
+            thresh = cv2.GaussianBlur(thresh, (5,5), 0)
+            thresh = cv2.medianBlur(thresh, 3)
+            # area = cv2.contourArea(contours[0])
+            # print(area)
+            # contours = np.array(contours).reshape((-1,1,2)).astype(np.int32)
+            # thresh = cv2.drawContours(thresh, contours, 3, (0,255,0), 3)
             plate_str = pytesseract.image_to_string(thresh).strip()
-            print(plate_str)
+            plate_str = ''.join(c for c in plate_str if c.isalnum())
+            # print(plate_str)
             df.loc[df['path'] == image_path.rsplit('/', 1)[1],["plate"]] = plate_str
             cv2.imwrite(output_path, thresh)
     return df
@@ -269,6 +294,6 @@ df = pd.read_csv("./detections.csv")
 df['plate'] = "<no plate>"
 
 for path in df.path.iteritems():
-    df = detect_plate(yolo,df, "cropped_detections/"+path[1], "plates/"+path[1], input_size=YOLO_INPUT_SIZE, show=True, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0))
+    df = detect_plate(yolo,df, "cropped_detections/"+path[1], "plates/"+path[1], input_size=YOLO_INPUT_SIZE, show=False, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0),score_threshold=0.1, iou_threshold=0.2)
 df.plate = df.plate.replace("","<not readable>")
 print(df)
