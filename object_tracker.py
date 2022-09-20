@@ -21,6 +21,13 @@ import pytesseract
 import imutils
 import math as m
 from datetime import datetime, timedelta 
+from rembg import remove
+from PIL import Image
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+import utils
+import colorsys
+import shutil
 
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
@@ -29,10 +36,10 @@ from deep_sort import generate_detections as gdet
 
 file_str = "Administrator_IPCamera 08_20220617102156_20220617114348 2"
 
-video_path   = "./IMAGES/carpark3.mp4"
+# video_path   = "./IMAGES/carpark3.mp4"
 crop_path = "./cropped_detections"
 crop_threshold = 0.6 #min confidence required to crop detection
-def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3, skip_frames=0):
+def Object_tracking(Yolo, file, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3, skip_frames=0):
     # Definition of the parameters
     max_cosine_distance = 0.7
     nn_budget = None
@@ -149,17 +156,16 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     # cropped_obj = frame[int(ymin)-5:int(ymax)+5, int(xmin)-5:int(xmax)+5]
                     # construct image name and join it to path for saving crop properly
                     obj_name = 'vehicle_' + str(track.track_id) + '.png'
-                    obj_path = os.path.join(crop_path, obj_name )
+                    obj_path = './working/'+file+'/crop/' + obj_name
                     # save image
                     paths.append(obj_name)
                     frames.append(frame_no)
                     best_confidences.append(track.best_confidence)
-                    seconds.append(frame_no/fps)
+                    seconds.append(frame_no/18)
                     ids.append(track.track_id)
-                    timestamps.append(get_timestamp(file_str, fps, frame_no))
+                    timestamps.append(get_timestamp(file_str, 18, frame_no))
                     # print()
                     cv2.imwrite(obj_path, cropped_obj)
-                    
                     print(timestamps[-1],"{:.2f}".format(frame_no/18), [int(x) for x in bbox],"{:.2f}".format(track.best_confidence), obj_name)
                 
 
@@ -266,23 +272,11 @@ def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, C
             # thresh = cv2.drawContours(thresh, contours, 3, (0,255,0), 3)
             plate_str = pytesseract.image_to_string(thresh).strip()
             plate_str = ''.join(c for c in plate_str if c.isalnum())
+            if plate_str =='': plate_str = '$not_readable$'
             # print(plate_str)
             df.loc[df['path'] == image_path.rsplit('/', 1)[1],["plate"]] = plate_str
             cv2.imwrite(output_path, thresh)
     return df
-    # print(df)
-    # # CreateXMLfile("XML_Detections", str(int(time.time())), original_image, bboxes, read_class_names(CLASSES))
-
-    # if output_path != '': cv2.imwrite(output_path, image)
-    # if show:
-    #     # Show the image
-    #     # cv2.imshow("predicted image", image)
-    #     # Load and hold the image
-    #     cv2.waitKey(0)
-    #     # To close the window after the required kill value was provided
-    #     cv2.destroyAllWindows()
-        
-    # return image
 
 def get_timestamp(filename, fps, frame_num):
     date_str = filename.split("_")[2]
@@ -291,26 +285,69 @@ def get_timestamp(filename, fps, frame_num):
     seconds = frame_num/fps
     elapsed_time = timedelta(seconds=seconds)
     final_datetime = (init_datetime + elapsed_time).replace(microsecond=0)
-    return  str(final_datetime.time())+"-"+str(final_datetime.date())
+    return  str(final_datetime.time()).replace(":",";")+"-"+str(final_datetime.date())
+
+def get_colour(clusters, input_path,output_path):
+    input = Image.open(input_path)
+    output = remove(input)
+    output.save(output_path)
+    output = cv2.imread(output_path)
+    output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
+    plt.figure()
+    plt.axis("off")
+    plt.imshow(output)
+    output_pixels = output.reshape((output.shape[0] * output.shape[1], 3))
+    clt = KMeans(n_clusters=clusters)
+    clt.fit(output_pixels)
+    rgb_colours = clt.cluster_centers_/255
+    hsl_colours = [colorsys.rgb_to_hls(*rgb) for rgb in rgb_colours]
+    score_colours = []
+    for colour in hsl_colours:
+        score_colours.append(colour[1]*colour[2])
+    hi_score_index = np.array(score_colours).argmax()
+    hi_score_colour = clt.cluster_centers_[hi_score_index]
+    return '#{:02x}{:02x}{:02x}'.format(int(hi_score_colour[0]),int(hi_score_colour[1]),int(hi_score_colour[2]))
+
+
     
+filenames = os.listdir('./input')
 yolo = Load_Yolo_model()
-df = Object_tracking(yolo,
-                video_path,
-                "detection.mp4",
-                input_size=YOLO_INPUT_SIZE,
-                show=False, 
-                iou_threshold=0.1,
-                rectangle_colors=(0,0,255),
-                Track_only = ["Car", "Truck", "Bus", "Van"],
-                n_init = 3,
-                max_age=15,
-                skip_frames=18)
+for filename in filenames:
+    working_path = "./working/"+filename.split('.')[0]
+    crop_path = working_path+"/crop/"
+    plate_path = working_path+"/plates/"
+    output_path = "./output/"+filename.split('.')[0]
+    if not os.path.exists(working_path):
+        os.mkdir(working_path)
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    if not os.path.exists(crop_path):
+        os.mkdir(crop_path)
+    if not os.path.exists(plate_path):
+        os.mkdir(plate_path)
+    print("Tracking Vehicles in "+filename)
+    df = Object_tracking(yolo,
+                    filename.split(".")[0],
+                    "./input/"+filename,
+                    "./working/"+filename,
+                    input_size=YOLO_INPUT_SIZE,
+                    show=False, 
+                    iou_threshold=0.1,
+                    rectangle_colors=(0,0,255),
+                    Track_only = ["Car", "Truck", "Bus", "Van"],
+                    n_init = 3,
+                    max_age=15,
+                    skip_frames=50)
 
-df = pd.read_csv("./detections.csv")
-df['plate'] = "<no plate>"
+    # df = pd.read_csv("./detections.csv")
+    df['plate'] = "$no_plate$"
+    df['colour'] = "$none$"
+    print("Reading Plates and Colours in "+filename)
+    for path in df.path.iteritems():
+        df = detect_plate(yolo,df,crop_path+path[1] ,plate_path+path[1] , input_size=YOLO_INPUT_SIZE, show=False, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0),score_threshold=0.1, iou_threshold=0.2)
+        row = df.loc[df['path'] == path[1]]
+        df.loc[df['path'] == path[1],["colour"]] = get_colour(3,crop_path+path[1],crop_path+path[1])
+        output_filename = (row.plate+"-"+row.colour+"-"+row.timestamp)[0]
+        shutil.copyfile(crop_path+path[1], output_path+"/"+output_filename+".png")
+    print(df)
 
-for path in df.path.iteritems():
-    df = detect_plate(yolo,df, "cropped_detections/"+path[1], "plates/"+path[1], input_size=YOLO_INPUT_SIZE, show=False, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0),score_threshold=0.1, iou_threshold=0.2)
-df.plate = df.plate.replace("","<not readable>")
-df['colour'] = "<none>"
-print(df)
