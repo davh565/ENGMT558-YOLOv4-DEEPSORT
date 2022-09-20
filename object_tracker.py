@@ -156,10 +156,10 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                     seconds.append(frame_no/fps)
                     ids.append(track.track_id)
                     timestamps.append(get_timestamp(file_str, fps, frame_no))
-                    print(timestamps[-1])
+                    # print()
                     cv2.imwrite(obj_path, cropped_obj)
                     
-                    print("{:.2f}".format(frame_no/18), [int(x) for x in bbox],"{:.2f}".format(track.best_confidence), obj_name)
+                    print(timestamps[-1],"{:.2f}".format(frame_no/18), [int(x) for x in bbox],"{:.2f}".format(track.best_confidence), obj_name)
                 
 
             ####################################################################
@@ -198,7 +198,7 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                         'timestamp': timestamps,
                         'path': paths,
                         'confidence': best_confidences})
-    print(df)
+    # print(df)
     df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=True).reset_index(drop=True)
     df.to_csv("./detections.csv", index=False)
     return df
