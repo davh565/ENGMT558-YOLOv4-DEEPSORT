@@ -290,7 +290,7 @@ def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, C
 
 def get_timestamp(filename, fps, frame_num):
     date_str = filename.split("_")[2]
-    init_year, init_month, init_day, init_hour, init_min, init_sec = date_str[0:4],date_str[4:6],date_str[6:8],date_str[8:10],date_str[10:12],date_str[12:14]
+    init_year, init_month, init_day, init_hour, init_min, init_sec = int(date_str[0:4]),int(date_str[4:6]),int(date_str[6:8]),int(date_str[8:10]),int(date_str[10:12]),int(date_str[12:14])
     hours = (fps / frame_num)/3600
     # hours_int = m.trunc(hours)
     hours_rem = hours - int(hours)
