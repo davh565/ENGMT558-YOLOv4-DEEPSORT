@@ -289,20 +289,37 @@ def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, C
     # return image
 
 def get_timestamp(filename, fps, frame_num):
+    seconds_run = 0
+    seconds = 0
+    seconds_overflow = 0
+    minutes_run = 0
+    minutes = 0
+    minutes_overflow = 0
+    hours_run = 0
+    hours = 0
+    hours_overflow = 0
+    days = 0
+    
     date_str = filename.split("_")[2]
     init_year, init_month, init_day, init_hour, init_min, init_sec = int(date_str[0:4]),int(date_str[4:6]),int(date_str[6:8]),int(date_str[8:10]),int(date_str[10:12]),int(date_str[12:14])
-    hours = (fps / frame_num)/3600
-    # hours_int = m.trunc(hours)
-    hours_rem = hours - int(hours)
-    minutes = hours_rem * 60
-    # minutes_int = m.trunc(minutes)
-    minutes_rem = minutes - int(minutes)
-    seconds = int(minutes_rem * 60)
-    # seconds_int = round(seconds)
+    seconds_run = (fps / frame_num)
+    if seconds_run > 60:
+        seconds_overflow = seconds_run - int(seconds_run-60)
+        seconds = round(seconds_run - seconds_overflow)
+        minutes_run = seconds_overflow / 60 + 1
+        if minutes_run > 60:
+            minutes_overflow = minutes_run - 60
+            minutes = minutes_run - minutes_overflow
+            hours_run = minutes_overflow / 60 + 1
+            if hours_run > 24:
+                hours_overflow = hours_run - 24
+                hours = hours_run - hours_overflow
+                days = 1
+
     SS = init_sec + seconds
-    MM = init_min + int(minutes)
-    HH = init_hour + int(hours)
-    dd = init_day
+    MM = init_min + minutes
+    HH = init_hour + hours
+    dd = init_day + days
     mm = init_month
     yy = init_year
     if SS > 60:
@@ -314,7 +331,7 @@ def get_timestamp(filename, fps, frame_num):
     if HH > 24:
         HH = HH - 24
         dd = dd + 1
-    return  str(HH) + ":"+ str(MM) +":"+ str(SS)+"-"+str(yy) +"_"+ "{:02d}".format(mm) +"_"+ "{:02d}".format(dd)
+    return  str(HH) + ":"+ str(MM) +":"+ str(SS)+"-"+ "{:02d}".format(dd) +"_"+ "{:02d}".format(mm) +"_" + str(yy)
     
 yolo = Load_Yolo_model()
 df = Object_tracking(yolo,
