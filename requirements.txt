@@ -10,3 +10,4 @@ awscli
 urllib3
 mss
 pytesseract
+rembg
