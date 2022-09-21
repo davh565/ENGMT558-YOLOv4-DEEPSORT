@@ -317,9 +317,10 @@ for filename in filenames:
     file_path = filename.split('.')[0]
     crop_path = working_path+file_path+"/crop/"
     plate_path = working_path+file_path+"/plates/"
-    output_path = "./output/"+filename.split('.')[0]
+    output_path = "./output/"
     if not os.path.exists(working_path):
         os.mkdir(working_path)
+        os.mkdir(output_path+file_path)
         if not os.path.exists(working_path+file_path):
             os.mkdir(working_path+file_path)
             os.mkdir(output_path)
