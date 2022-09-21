@@ -313,18 +313,18 @@ def get_colour(clusters, input_path,output_path):
 filenames = os.listdir('./input')
 yolo = Load_Yolo_model()
 for filename in filenames:
-    working_path = "./working/"+filename.split('.')[0]
-    crop_path = working_path+"/crop/"
-    plate_path = working_path+"/plates/"
+    working_path = "./working/"
+    file_path = filename.split('.')[0]
+    crop_path = working_path+file_path+"/crop/"
+    plate_path = working_path+file_path+"/plates/"
     output_path = "./output/"+filename.split('.')[0]
     if not os.path.exists(working_path):
         os.mkdir(working_path)
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
-    if not os.path.exists(crop_path):
-        os.mkdir(crop_path)
-    if not os.path.exists(plate_path):
-        os.mkdir(plate_path)
+        if not os.path.exists(working_path+file_path):
+            os.mkdir(working_path+file_path)
+            os.mkdir(output_path)
+            os.mkdir(crop_path)
+            os.mkdir(plate_path)
     print("Tracking Vehicles in "+filename)
     df = Object_tracking(yolo,
                     filename.split(".")[0],
