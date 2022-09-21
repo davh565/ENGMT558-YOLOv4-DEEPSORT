@@ -336,8 +336,8 @@ for filename in filenames:
                     rectangle_colors=(0,0,255),
                     Track_only = ["Car", "Truck", "Bus", "Van"],
                     n_init = 3,
-                    max_age=5,
-                    skip_frames=9)
+                    max_age=10,
+                    skip_frames=5)
 
     # df = pd.read_csv("./detections.csv")
     df['plate'] = "$no_plate$"

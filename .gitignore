@@ -13,3 +13,4 @@ MAX518BCSA-T.zip
 /input/*.mp4
 /output/*
 /working/*
+detections.csv
