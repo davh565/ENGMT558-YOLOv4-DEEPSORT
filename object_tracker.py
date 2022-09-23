@@ -9,6 +9,7 @@
 #
 #================================================================
 import os
+from turtle import width
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import cv2
 import numpy as np
@@ -200,7 +201,7 @@ def Object_tracking(Yolo, file, video_path, output_path, input_size=416, show=Fa
                         'confidence': best_confidences})
     # print(df)
     df = df.drop_duplicates('id' , keep='last').sort_values('id' , ascending=True).reset_index(drop=True)
-    df.to_csv("./detections.csv", index=False)
+    # df.to_csv("./detections.csv", index=False)
     return df
 
 
@@ -244,19 +245,28 @@ def detect_plate(Yolo,df ,image_path, output_path, input_size=416, show=False, C
             cropped_obj = cv2.resize( cropped_obj, None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
             # perform otsu thresh (using binary inverse since opencv contours work better with white text)
             ret, thresh = cv2.threshold(cropped_obj, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-            rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
-            # close = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, rect_kern)
+            rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+            close = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, rect_kern)
             
             thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, rect_kern)
-            thresh = cv2.morphologyEx(thresh, cv2.MORPH_ERODE, rect_kern)
+            # rect_kern = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+            # thresh = cv2.morphologyEx(thresh, cv2.MORPH_ERODE, rect_kern)
+            # height,width = thresh.shape
+            # thresh[:int(height/8)] = 0
+            # thresh[int(height - height/8):] = 0
+            # thresh[:,:int(width/8)] = 0
+            # thresh[:,int(width - width/8):] = 0
+            hei, wid = thresh.shape
             contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             # contours = imutils.grab_contours(contours)
             mask = np.ones(thresh.shape[:2], dtype="uint8") * 255
             # loop over the contours
             for c in contours:
                 x,y,w,h = cv2.boundingRect(c)
-                # if the contour is bad, draw it on the mask
-                if w >= 0.6*thresh.shape[1] or h >= thresh.shape[0] or cv2.contourArea(c) <= 0.01*thresh.shape[0]*thresh.shape[1]:
+                # remove contours on the edges
+                if x == 0 or y == 0 or x+w == wid or y+h == hei:
+                    cv2.drawContours(mask, [c], -1, 0, -1)
+                if cv2.contourArea(c) <= 0.01*thresh.shape[0]*thresh.shape[1]:
                     cv2.drawContours(mask, [c], -1, 0, -1)
             thresh = cv2.bitwise_and(thresh, thresh, mask=mask)
             thresh = cv2.dilate(thresh, rect_kern, iterations = 1)
@@ -308,48 +318,15 @@ def get_colour(clusters, input_path,output_path):
     hi_score_colour = clt.cluster_centers_[hi_score_index]
     return '#{:02x}{:02x}{:02x}'.format(int(hi_score_colour[0]),int(hi_score_colour[1]),int(hi_score_colour[2]))
 
-
+def add_plate_timestamp(path, timestamp, plate):
+    im = cv2.imread(path)
+    im = cv2.putText(im, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+    im = cv2.putText(im,plate, (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+    cv2.imwrite(path, im)
     
-filenames = os.listdir('./input')
-yolo = Load_Yolo_model()
-for filename in filenames:
-    working_path = "./working/"
-    file_path = filename.split('.')[0]
-    crop_path = working_path+file_path+"/crop/"
-    plate_path = working_path+file_path+"/plates/"
-    output_path = "./output/"
-    if not os.path.exists(working_path):
-        os.mkdir(working_path)
-        os.mkdir(output_path+file_path)
-        if not os.path.exists(working_path+file_path):
-            os.mkdir(working_path+file_path)
-            os.mkdir(output_path)
-            os.mkdir(crop_path)
-            os.mkdir(plate_path)
-    print("Tracking Vehicles in "+filename)
-    df = Object_tracking(yolo,
-                    filename.split(".")[0],
-                    "./input/"+filename,
-                    "./working/"+filename,
-                    input_size=YOLO_INPUT_SIZE,
-                    show=False, 
-                    iou_threshold=0.1,
-                    rectangle_colors=(0,0,255),
-                    Track_only = ["Car", "Truck", "Bus", "Van"],
-                    n_init = 3,
-                    max_age=10,
-                    skip_frames=5)
-
-    # df = pd.read_csv("./detections.csv")
-    df['plate'] = "$no_plate$"
-    df['colour'] = "$none$"
-    print("Reading Plates and Colours in "+filename)
-    for path in df.path.iteritems():
-        df = detect_plate(yolo,df,crop_path+path[1] ,plate_path+path[1] , input_size=YOLO_INPUT_SIZE, show=False, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0),score_threshold=0.1, iou_threshold=0.2)
-        df.loc[df['path'] == path[1],["colour"]] = get_colour(3,crop_path+path[1],crop_path+path[1])
-        row = df.loc[df['path'] == path[1]]
-        row = row.iloc[0]
-        output_filename = (row.plate+"-"+row.colour+"-"+row.timestamp)
-        shutil.copyfile(crop_path+path[1], output_path+"/"+output_filename+".png")
-    print(df)
+    
+def make_dirs(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
 

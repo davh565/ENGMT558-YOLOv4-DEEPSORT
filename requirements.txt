@@ -1,10 +1,10 @@
 numpy
-scipy
-wget
-seaborn
-tensorflow==2.3.0
-opencv-python==4.4.0.46
-tqdm
+scipy>=1.4.1
+wget>=3.2
+seaborn>=0.10.0
+tensorflow==2.10.0
+opencv-python
+tqdm>=4.43.0
 pandas
 awscli
 urllib3
