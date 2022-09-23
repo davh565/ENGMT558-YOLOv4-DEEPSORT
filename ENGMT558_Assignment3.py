@@ -1,7 +1,17 @@
 # use pip install -r requirements.txt to install dependencies
+# github repo: https://github.com/davh565/ENGMT558-AS3
 
+# code is forked from https://github.com/pythonlessons/TensorFlow-2.x-YOLOv3 and
+# heavily modified. Code from https://github.com/theAIGuysCode/yolov4-deepsort
+# and https://github.com/theAIGuysCode/yolov4-custom-functions was also referenced
+# and adapted to fit the needs of this project.
+
+# To use, place video file in /input/. Results will appear in 
+# /output/<original_filename>/
+# run ENGMT558_Assignment3.py
 
 from object_tracker import *
+import shutil
 
 print("_________________________________________________________________________________________________________")
 print("Loading YOLOv4 Model")
@@ -48,6 +58,10 @@ for filename in filenames:
     for file in df.path.iteritems():
         df = detect_plate(yolo,df,crop_path+file[1] ,plate_path+file[1] , input_size=YOLO_INPUT_SIZE, show=False, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0),score_threshold=0.1, iou_threshold=0.2)
         add_plate_timestamp(crop_path+file[1],df.timestamp[df.path == file[1]].values[0],df.plate[df.path == file[1]].values[0])
+    df = df.drop_duplicates(subset='plate', keep="last")
+    df = df[df.plate != "$no_plate$"]
+    for file in df.path.iteritems():
+        df = detect_plate(yolo,df,crop_path+file[1] ,plate_path+file[1] , input_size=YOLO_INPUT_SIZE, show=False, CLASSES=YOLO_COCO_CLASSES, rectangle_colors=(255,0,0),score_threshold=0.1, iou_threshold=0.2)
         df.loc[df['path'] == file[1],["colour"]] = get_colour(3,crop_path+file[1],rembg_path+file[1])
         row = df.loc[df['path'] == file[1]]
         row = row.iloc[0]

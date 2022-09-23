@@ -19,16 +19,13 @@ from yolov3.configs import *
 import time
 import pandas as pd
 import pytesseract
-import imutils
 import math as m
 from datetime import datetime, timedelta 
 from rembg import remove
 from PIL import Image
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
-import utils
 import colorsys
-import shutil
 
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
@@ -320,13 +317,13 @@ def get_colour(clusters, input_path,output_path):
 
 def add_plate_timestamp(path, timestamp, plate):
     im = cv2.imread(path)
-    im = cv2.putText(im, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-    im = cv2.putText(im,plate, (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+    im = cv2.putText(im, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+    im = cv2.putText(im,plate, (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
     cv2.imwrite(path, im)
     
     
 def make_dirs(path):
     if not os.path.exists(path):
         os.makedirs(path)
-    
+
 
