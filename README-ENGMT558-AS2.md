@@ -1,5 +1,5 @@
 use pip install -r requirements.txt to install dependencies
-github repo: https://github.com/davh565/ENGMT558-AS3
+github repo: https://github.com/davh565/ENGMT558-YOLOv4-DEEPSORT
 
 code is forked from https://github.com/pythonlessons/TensorFlow-2.x-YOLOv3 and
 heavily modified. Code from https://github.com/theAIGuysCode/yolov4-deepsort

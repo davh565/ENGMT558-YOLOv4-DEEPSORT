@@ -1,5 +1,5 @@
 # use pip install -r requirements.txt to install dependencies
-# github repo: https://github.com/davh565/ENGMT558-AS3
+# github repo: https://github.com/davh565/ENGMT558-YOLOv4-DEEPSORT
 
 # code is forked from https://github.com/pythonlessons/TensorFlow-2.x-YOLOv3 and
 # heavily modified. Code from https://github.com/theAIGuysCode/yolov4-deepsort
@@ -47,7 +47,7 @@ for filename in filenames:
                     Track_only = ["Car", "Truck", "Bus", "Van"],
                     n_init = 3,
                     max_age=10,
-                    skip_frames=36)
+                    skip_frames=9)
 
     # df = pd.read_csv(output_path+"df.csv")
     df['plate'] = "$no_plate$"

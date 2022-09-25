@@ -32,9 +32,6 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
-file_str = "Administrator_IPCamera 08_20220617102156_20220617114348 2"
-
-# video_path   = "./IMAGES/carpark3.mp4"
 crop_path = "./cropped_detections"
 crop_threshold = 0.6 #min confidence required to crop detection
 def Object_tracking(Yolo, file, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = [],max_age=30, n_init=3, skip_frames=0):
@@ -161,7 +158,7 @@ def Object_tracking(Yolo, file, video_path, output_path, input_size=416, show=Fa
                     best_confidences.append(track.best_confidence)
                     seconds.append(frame_no/18)
                     ids.append(track.track_id)
-                    timestamps.append(get_timestamp(file_str, 18, frame_no))
+                    timestamps.append(get_timestamp(file, 18, frame_no))
                     # print()
                     cv2.imwrite(obj_path, cropped_obj)
                     print(timestamps[-1],"{:.2f}".format(frame_no/18), [int(x) for x in bbox],"{:.2f}".format(track.best_confidence), obj_name)
